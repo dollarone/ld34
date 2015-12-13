@@ -64,6 +64,21 @@
                  "width":0,
                  "x":4992,
                  "y":640
+                }, 
+                {
+                 "gid":35,
+                 "height":0,
+                 "name":"",
+                 "properties":
+                    {
+                     "special":"exit",
+                     "type":"item"
+                    },
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":576,
+                 "y":832
                 }],
          "opacity":1,
          "type":"objectgroup",

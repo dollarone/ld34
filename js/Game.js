@@ -18,14 +18,14 @@ PlatformerGame.Game.prototype = {
         '20':19, '21':20, '22':21, '23':22, '24':23, '25':24 , '26':25, '27':26, '28':27, '29':28,
         '30':29, '31':30, '32':31, '33':32, '34':33, '35':1 , '36':1, '37':1, '38':1, '39':1, '40':1 }; 
 
-        this.loadLevel('level1');
-
-
         this.game.physics.ninja.gravity = 0.4;
 
+        this.thisLevel = 1;
+        this.levelNames = ['level_0_is_secret', 'level1', 'level2', 'level3'];
+        this.won = false;
         //  Finally some stars to collect
-        this.stars = this.game.add.group();
 /*
+
         //  Here we'll create 12 of them evenly spaced apart
         for (var i = 0; i < 12; i++) {
             //  Create a star inside of the 'stars' group
@@ -41,33 +41,48 @@ PlatformerGame.Game.prototype = {
 */
         //  The score
         this.fontStyle = { font: "23px Oswald", fill: "#000", align: "center" };
-        this.fontStyleSmall = { font: "10px Arial", fill: "#000000", align: "center" };
+        this.fontStyleSmall = { font: "14px Arial", fill: "#000000", align: "center" };
 
 //        this.pausedText = this.game.add.text(this.player.x, this.player.y, "Paused ", this.styleSmall);
-
-        this.scoreText = this.game.add.text(32, 416, 'score: 0', this.fontStyle);
-
-        this.scoreText.text = "Grumpy wizards make toxic brew for the evil Queen and Jack." //Press up to jump!"
 
         //  Our controls.
         this.cursors = this.game.input.keyboard.createCursorKeys();
 
-        //this.rkey = this.game.input.keyboard.addKey(Phaser.Keyboard.R);
-        //this.jump.onDown.add(this.actionOnClick, this);
-        //this.rkey.onDown.add(this.reset, this);
-    
-        this.resetVars();         
+        this.rkey = this.game.input.keyboard.addKey(Phaser.Keyboard.O);
+        this.rkey.onDown.add(this.playerHitReset, this);
+
+        this.pkey = this.game.input.keyboard.addKey(Phaser.Keyboard.P);
+        this.pkey.onDown.add(this.pause, this);
+
+        this.pauseText = PlatformerGame.game.add.text(380, 300, 'Paused', this.fontStyleSmall);
+        this.pauseText.fixedToCamera = true;
+        this.pauseText.visible = false;      
+        
+        this.loadLevel(this.levelNames[this.thisLevel]);
+        this.resetVars();
+        this.goToNextLevel = false;
 
     },
 
     update: function() {
+        
+        if (this.goToNextLevel) {
+            this.goToNextLevel = false;
 
-        if (this.finished) {
-            return;
+            this.thisLevel++;
+            if (this.thisLevel == this.levelNames.length) {
+                this.winGame();
+            }
+            else {
+                this.loadLevel(this.levelNames[this.thisLevel]);
+                this.resetVars();
+            }
+
         }
 
-        // TODO: update values
-        if (this.player.body.y > 70*16 || this.player.body.x < -this.player.body.width || this.player.body.x > 70*99) {
+        // Death by leaving map (on top is ok)
+        if (this.player.body.y > this.map.height*this.map.tileHeight + this.player.body.height || this.player.body.x < -this.player.body.width || 
+            this.player.body.x > this.map.width*this.map.tileWidth + this.player.body.width) {
             this.playerDied();
         }
 
@@ -186,6 +201,7 @@ PlatformerGame.Game.prototype = {
             this.jumpSpeed += this.speedIncrement;
             this.jumpSpeed = Math.min(this.jumpSpeed, this.jumpMaxSpeed);
         }
+        
     },
 
     resetSpeed: function() {
@@ -257,7 +273,7 @@ PlatformerGame.Game.prototype = {
     },
 
     createItems: function() {
-        this.items = this.game.add.group();
+        //this.items = this.game.add.group();
         
         result = this.findObjectsByType('item', this.map, 'ObjectLayer');
         result.forEach(function(element) {
@@ -318,9 +334,7 @@ PlatformerGame.Game.prototype = {
     collectItem : function(player, item) {
 
         if (item.special == "exit") {
-            this.finished = true;
-            this.loadLevel("level2");
-            this.resetVars();
+            this.goToNextLevel = true;            
         }
         else {
             // Removes the star from the screen
@@ -335,20 +349,13 @@ PlatformerGame.Game.prototype = {
         }
 
     },    
-    grow : function(size) {
-        //this.player = this.game.add.sprite(this.player.x, this.player.y, 'dude');
-        this.player.anchor.set(0.5, 1);
-        this.player.scale.setTo(size);
-        this.player.y -= this.player.height;
-        //this.player.anchor.set(0.5, 0.75);
-        //this.player.body.height *= 2;
-        //this.player.body.width *= 2
-        this.player.body.aabb = new Phaser.Physics.Ninja.AABB(this.player.body, this.player.x, this.player.y, this.player.width*2, this.player.height*2);
-        //this.player.body.aabb.body.height *= 2;
-        //this.player.body.aabb.integrate();
-        //this.player.body.reset();
-        //this.player.setSize(80, 96, 0, 0);
 
+    winGame: function() {
+        this.pauseText = PlatformerGame.game.add.text(290, 220, 'You cleared all the levels!\n   Well done!\n   Thanks for playing!', this.fontStyle);
+        this.pauseText.fixedToCamera = true;
+        this.game.paused = true;
+        this.won = true;
+      
     },
 
 
@@ -367,13 +374,14 @@ PlatformerGame.Game.prototype = {
     },
 
     loadLevel : function(levelName) {
-        if (this.map) {
+
+        if (this.map) {    
             this.map.destroy();
             this.player.destroy();
             this.backgroundLayer.destroy();
             this.groundLayer.destroy();
-            //this.items.destroy();
-            //this.tiles.destroy();
+            this.textGroup.destroy();
+            this.stars.destroy();
             this.foregroundLayer.destroy();
             //this.coins.destroy();
         }
@@ -388,12 +396,47 @@ PlatformerGame.Game.prototype = {
 
         this.groundLayer.resizeWorld();
 
+        this.resetItemsGroup();
         this.createItems();
 
         var result = this.findObjectsByType('playerStart', this.map, 'ObjectLayer');
         this.createPlayer(result[0].x, result[0].y, 1);
         this.foregroundLayer = this.map.createLayer('ForegroundLayer');
+        
+        this.textGroup = this.game.add.group();
 
+        if (levelName == 'level1') {
+            text = this.game.add.text(32, 416, '', this.fontStyle);
+            //text.text = "Grumpy wizards make toxic brew for the evil Queen and Jack." //Press up to jump!"
+            text.text = "Ah, perhaps you will want to get up up and away? Press up to jump!";
+            this.textGroup.add(text);
+
+            text = this.game.add.text(1509, 416, '', this.fontStyle);
+            text.text = "Sometimes you need a bit more speed. Hold up to run!";
+            this.textGroup.add(text);
+
+            text = this.game.add.text(3009, 416, '', this.fontStyle);
+            text.text = "Not sure which way you want to go? Press down to change direction!";
+            this.textGroup.add(text);
+
+            text = this.game.add.text(4009, 416, '', this.fontStyle);
+            text.text = "You can also hold down to stay still.";
+            this.textGroup.add(text);
+
+            text = this.game.add.text(5009, 416, '', this.fontStyle);
+            text.text = "Below is your exit! Have fun!";
+            this.textGroup.add(text);
+
+        }
+
+        this.stars = this.game.add.group();
+    },
+
+    resetItemsGroup: function() {
+        if (this.items) {
+            this.items.destroy();
+        }
+        this.items = this.game.add.group();
     },
 
     resetVars : function() {
@@ -430,13 +473,28 @@ PlatformerGame.Game.prototype = {
         this.finished = false;
     },
 
+    playerHitReset : function() {
+        if (!this.game.paused) {
+            this.playerDied();
+        }
+    },
     playerDied : function() {
+
         this.player.kill();
         this.resetVars();
         var result = this.findObjectsByType('playerStart', this.map, 'ObjectLayer');
         this.createPlayer(result[0].x, result[0].y, 1);
-        this.items.destroy();
+
+        this.resetItemsGroup();
         this.createItems();
+
+    },
+
+    pause : function() {
+        if (!this.won) {
+            this.pauseText.visible = !this.pauseText.visible;
+            this.game.paused = !this.game.paused;
+        }
 
     },
 
@@ -444,7 +502,7 @@ PlatformerGame.Game.prototype = {
         text = PlatformerGame.game.add.text(32, 456, 'score: 0', this.fontStyleSmall);
 
         text.text = "FFS Jack." //Press up to jump!"
-
+        text.visible = false;
     }
 
 };
