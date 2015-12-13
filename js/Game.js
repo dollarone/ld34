@@ -21,7 +21,7 @@ PlatformerGame.Game.prototype = {
         this.game.physics.ninja.gravity = 0.4;
 
         this.thisLevel = 1;
-        this.levelNames = ['level_0_is_secret', 'level1', 'level2', 'level3'];
+        this.levelNames = ['level_0_is_secret', 'testlevel', 'level1', 'level2', 'level3'];
         this.won = false;
         //  Finally some stars to collect
 /*
@@ -65,7 +65,7 @@ PlatformerGame.Game.prototype = {
     },
 
     update: function() {
-        
+
         if (this.goToNextLevel) {
             this.goToNextLevel = false;
 
@@ -78,6 +78,11 @@ PlatformerGame.Game.prototype = {
                 this.resetVars();
             }
 
+        }
+
+        if (this.playerHurtCooldown > 0) {
+            this.playerHurtCooldown--;
+         
         }
 
         // Death by leaving map (on top is ok)
@@ -261,7 +266,7 @@ PlatformerGame.Game.prototype = {
         this.player.animations.add('right', [5, 6, 7, 8], 10, true);
 
         this.jumpTime += 4;
-        this.jumpVelocity += 150;
+        this.jumpUpBaseSpeed += 150;
 
         if (this.direction == 0) {
             this.player.animations.play('left');
@@ -336,19 +341,41 @@ PlatformerGame.Game.prototype = {
         if (item.special == "exit") {
             this.goToNextLevel = true;            
         }
+        else if (item.special == "spikes") {
+            if (this.playerHurtCooldown == 0) {
+                this.playerHurt(player); 
+            }
+        }
+
         else {
             // Removes the star from the screen
             item.kill();
 
             this.currentSize *= this.growthFactor;
+            
             this.createPlayer(player.x - (player.body.width * this.growthFactor / 2), 
                 player.y - 5*this.currentSize - (player.body.height * this.growthFactor / 2), this.currentSize);
-            
-
             player.kill();
+            
         }
 
     },    
+
+    playerHurt: function(player) {
+        this.playerHurtCooldown = this.playerHurtCooldownBase;
+
+        this.currentSize = 1;
+            
+        this.createPlayer(player.x - (this.originalWidth * this.growthFactor / 2), 
+            player.y - 5*this.currentSize - (this.originalHeight * this.growthFactor / 2), this.currentSize);
+        player.kill();
+        this.jumpUpBaseSpeed = this.jumpUpBaseSpeedInitial;
+        this.jumpTime = this.jumpTimeInitial;
+        var tween = this.game.add.tween(this.player).to( { alpha: 0.5 }, 50, "Linear", true, 0, 4);
+        tween.yoyo(true, 150);
+
+  
+    },
 
     winGame: function() {
         this.pauseText = PlatformerGame.game.add.text(290, 220, 'You cleared all the levels!\n   Well done!\n   Thanks for playing!', this.fontStyle);
@@ -446,8 +473,11 @@ PlatformerGame.Game.prototype = {
         this.timer = 0;
 
         this.currentSize = 1;
-        this.jumpUpBaseSpeed = 80;
-        this.jumpTime = 7;
+
+        this.jumpUpBaseSpeedInitial = 80;
+        this.jumpUpBaseSpeed = this.jumpUpBaseSpeedInitial;
+        this.jumpTimeInitial = 7;
+        this.jumpTime = this.jumpTimeInitial;
         this.growthFactor = 1.5;
         this.tileOffsetY = this.player.width / 3;
 
@@ -471,6 +501,9 @@ PlatformerGame.Game.prototype = {
         this.hasPressedJump = false;
         this.run = false;
         this.finished = false;
+
+        this.playerHurtCooldownBase = 100;
+        this.playerHurtCooldown = 0;
     },
 
     playerHitReset : function() {
