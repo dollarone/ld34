@@ -173,7 +173,7 @@ PlatformerGame.Intro.prototype = {
   skip : function() {
     if (!this.pressed) {
         this.pressed = true;
-        this.state.start('Game');
+        this.state.start('Story');
     }
   },
 
@@ -182,7 +182,7 @@ PlatformerGame.Intro.prototype = {
     this.startLogoAnimationTimer--;
     if (this.startLogoAnimationTimer < 0) {
         this.pressed = true;
-        this.state.start('Game');
+        this.state.start('Story');
     }
   },
 

@@ -1,6 +1,6 @@
 var PlatformerGame = PlatformerGame || {};
 
-PlatformerGame.game = new Phaser.Game(800, 600, Phaser.AUTO, '');
+PlatformerGame.game = new Phaser.Game(800, 600, Phaser.AUTO, '', null, false, false);
 
         //  The Google WebFont Loader will look for this object, so create it before loading the script.
             WebFontConfig = {
@@ -22,6 +22,7 @@ PlatformerGame.game = new Phaser.Game(800, 600, Phaser.AUTO, '');
 PlatformerGame.game.state.add('Boot', PlatformerGame.Boot);
 PlatformerGame.game.state.add('Preload', PlatformerGame.Preload);
 PlatformerGame.game.state.add('Intro', PlatformerGame.Intro);
+PlatformerGame.game.state.add('Story', PlatformerGame.Story);
 PlatformerGame.game.state.add('Game', PlatformerGame.Game);
 
 PlatformerGame.game.state.start('Boot');

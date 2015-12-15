@@ -1,2 +1,2 @@
 # LD34
-Unnamed game for LD34
+Crazy John's Mushroom Hunt
