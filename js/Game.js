@@ -45,7 +45,7 @@ PlatformerGame.Game.prototype = {
         this.showDebug = false;
 
         this.thisLevel = 1;
-        this.levelNames = ['level_0_is_secret', 'level1', 'level2', 'level3'];
+        this.levelNames = ['level_0_is_secret', 'level4', 'level2', 'level3'];
         this.won = false;
         //  The score
         this.fontStyle = { font: "23px Oswald", fill: "#000", align: "center" };
@@ -92,7 +92,7 @@ PlatformerGame.Game.prototype = {
         this.music = this.game.add.audio('theme');
         this.music.volume = 0.4;
         this.music.loop = true;
-        this.music.play();
+        //this.music.play();
 
         this.elapsedTime = 0;
         this.scoreText = this.game.add.text(350, 12, '', this.fontStyle);
@@ -101,10 +101,13 @@ PlatformerGame.Game.prototype = {
         this.scoreText2.fixedToCamera = true;
         this.timeText = this.game.add.text(562, 12, '', this.fontStyle);
         this.timeText.fixedToCamera = true;
+
+        this.timer = 0;
     
     },
 
     update: function() {
+        this.timer++;
         this.elapsedTime = this.game.time.totalElapsedSeconds();
         this.scoreText.text = "Mushrooms eaten:  " + this.mushroomsEaten;
         this.scoreText2.text = "Total mushrooms in this level:  " + this.totalMushrooms;
@@ -163,6 +166,21 @@ PlatformerGame.Game.prototype = {
             this.playerDied();
         }
 
+console.log(this.timer);
+        if (this.timer % 100 == 0) {
+            this.avalancheLaunchers.forEach(function(avalancheLauncher) {
+                sprite = this.items.create(avalancheLauncher.x - 64, avalancheLauncher.y - 32, 'rock');
+                this.game.physics.ninja.enable(sprite);
+                sprite.special = 'rock';
+                sprite.body.moveLeft(30);
+                sprite.body.collideWorldBounds = false;
+
+                sprite.body.friction = 0.1;
+console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
+                }, this);
+        }
+
+
         this.game.physics.ninja.overlap(this.player, this.items, this.collectItem, null, this);
 
         for (var i = 0; i < this.tiles.length; i++) {
@@ -178,6 +196,9 @@ PlatformerGame.Game.prototype = {
             
             this.items.forEach(function(item) {
                 item.body.aabb.collideAABBVsTile(this.tiles[i].tile);
+                if (item.special == 'rock') {
+                        item.body.moveLeft(30);
+                }
             }, this);
        
         }
@@ -339,12 +360,20 @@ PlatformerGame.Game.prototype = {
             offsetY = parseInt(element.properties.offsetY);
         }
 
-        if ('special' in element.properties && (element.properties.special == "mushroom" || element.properties.special == "shroom")) {
-            sprite = group.create(element.x, element.y + 32 + offsetY, 'mushrooms');
-            this.totalMushrooms++;
-        }
-        else if ('special' in element.properties && element.properties.special == "spikes") {
-            sprite = group.create(element.x, element.y + 32 + offsetY, 'spikes');
+        if ('special' in element.properties) {
+            if (element.properties.special == "mushroom" || element.properties.special == "shroom") {
+                sprite = group.create(element.x, element.y + 32 + offsetY, 'mushrooms');
+                this.totalMushrooms++;
+            }
+            else if (element.properties.special == "spikes") {
+                sprite = group.create(element.x, element.y + 32 + offsetY, 'spikes');
+                //sprite.body.gravity = 0;
+            }
+            else if (element.properties.special == "avalanche") {
+                sprite = group.create(element.x, element.y, 'spikes');
+                sprite.frame = 0;
+                this.avalancheLaunchers.add(sprite);
+            }
         }
         else {
             sprite = group.create(element.x, element.y + 32 + offsetY, 'tiles');
@@ -370,7 +399,7 @@ PlatformerGame.Game.prototype = {
         if (item.special == "exit") {
             this.goToNextLevel = true;            
         }
-        else if (item.special == "spikes") {
+        else if (item.special == "spikes" || item.special == "rock") {
             if (this.playerHurtCooldown == 0) {
                 this.playerHurt(player);
             }
@@ -439,6 +468,8 @@ PlatformerGame.Game.prototype = {
             this.textGroup.destroy();
             this.foregroundLayer.destroy();
             this.exit.destroy();
+            this.avalancheLaunchers.destroy();
+
             
         }
         this.map = this.game.add.tilemap(levelName);
@@ -449,7 +480,7 @@ PlatformerGame.Game.prototype = {
         this.groundLayer = this.map.createLayer('GroundLayer');
         this.tiles = this.game.physics.ninja.convertTilemap(this.map, this.groundLayer, this.slopeMap);
 
-        this.map.setCollisionBetween(1, 1000, true, 'GroundLayer');
+        this.map.setCollisionBetween(1, 10000, true, 'GroundLayer');
 
         this.groundLayer.resizeWorld();
 
@@ -473,6 +504,9 @@ PlatformerGame.Game.prototype = {
         this.exitEntryY = this.exit.y + this.exit.height/2;
         this.exit.animations.add('open', [168,169,170], 2, false);
         this.exit.animations.add('glimmer', [170,171,172,173], 10, true);
+
+
+        this.avalancheLaunchers = this.game.add.group();
 
         this.resetItemsGroup();
         this.totalMushrooms = 0;

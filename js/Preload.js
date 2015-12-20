@@ -18,11 +18,13 @@ PlatformerGame.Preload.prototype = {
     this.load.tilemap('level1', 'assets/tilemaps/level1.json', null, Phaser.Tilemap.TILED_JSON);
     this.load.tilemap('level2', 'assets/tilemaps/level2.json', null, Phaser.Tilemap.TILED_JSON);
     this.load.tilemap('level3', 'assets/tilemaps/level3.json', null, Phaser.Tilemap.TILED_JSON);
+    this.load.tilemap('level4', 'assets/tilemaps/level4.json', null, Phaser.Tilemap.TILED_JSON);
 
     this.game.load.image('mytiles', 'assets/images/tiles.png');
     this.game.load.spritesheet('tiles', 'assets/images/tiles.png', 64, 64);
     this.game.load.spritesheet('mushrooms', 'assets/images/shrooms.png', 28, 33);
     this.game.load.spritesheet('spikes', 'assets/images/spikes.png', 64, 18);
+    this.game.load.spritesheet('rock', 'assets/images/rock.png', 20, 20);
     this.game.load.spritesheet('john', 'assets/images/john3.png', 40, 65);
 
     this.game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
@@ -48,7 +50,7 @@ PlatformerGame.Preload.prototype = {
 
   },
   create: function() {
-    this.state.start('Intro');
+    this.state.start('Game');
   },
 
 
