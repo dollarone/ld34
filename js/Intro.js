@@ -1,4 +1,4 @@
-var PlatfomerGame = PlatformerGame || {};
+var PlatformerGame = PlatformerGame || {};
 
 //title screen
 PlatformerGame.Intro = function(){};
@@ -180,7 +180,7 @@ PlatformerGame.Intro.prototype = {
   update: function() {
 
     this.startLogoAnimationTimer--;
-    if (this.startLogoAnimationTimer < 0) {
+    if (this.startLogoAnimationTimer < 0 && !this.pressed) {
         this.pressed = true;
         this.state.start('Story');
     }

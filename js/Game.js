@@ -1,4 +1,4 @@
-var PlatfomerGame = PlatformerGame || {};
+var PlatformerGame = PlatformerGame || {};
 
 //title screen
 PlatformerGame.Game = function(){};
@@ -63,12 +63,16 @@ PlatformerGame.Game.prototype = {
         this.pauseText = PlatformerGame.game.add.text(380, 300, 'Paused', this.fontStyleSmall);
         this.pauseText.fixedToCamera = true;
         this.pauseText.visible = false;      
-        
+ 
         this.loadLevel(this.levelNames[this.thisLevel]);
         this.resetVars();
+
+        this.resetItemsGroup();
+        this.createItems();
+
         this.goToNextLevel = false;
 
-        this.game.sound.volume = 0.6;
+        this.game.sound.volume = 0.7;
 
 
         this.sound_injured1 = this.game.add.audio('injured1');
@@ -90,9 +94,9 @@ PlatformerGame.Game.prototype = {
         this.sound_random2.volume = 0.25;
 
         this.music = this.game.add.audio('theme');
-        this.music.volume = 0.4;
+        this.music.volume = 1;
         this.music.loop = true;
-        //this.music.play();
+        this.music.play();
 
         this.elapsedTime = 0;
         this.scoreText = this.game.add.text(350, 12, '', this.fontStyle);
@@ -151,6 +155,8 @@ PlatformerGame.Game.prototype = {
             else {
                 this.loadLevel(this.levelNames[this.thisLevel]);
                 this.resetVars();
+        	this.resetItemsGroup();
+        	this.createItems();
             }
 
         }
@@ -293,7 +299,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
     },
 
     createPlayer : function(x, y, size) {
-        this.player = this.game.add.sprite(x, y, 'john');
+        this.player = this.game.add.sprite(x, y - 64, 'john');
         this.player.scale.setTo(size);
 
         //  We need to enable physics on the player
@@ -345,8 +351,6 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
         var result = new Array();
         map.objects[layer].forEach(function(element) {
             if (element.properties.type === type) {
-                // phaser uses top left - tiled bottom left so need to adjust:
-                element.y -= map.tileHeight;
                 result.push(element);
             }
         });
@@ -376,7 +380,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
             }
         }
         else {
-            sprite = group.create(element.x, element.y + 32 + offsetY, 'tiles');
+            sprite = group.create(element.x, element.y + 32 + offsetY - 64, 'tiles');
         }
 
         sprite.frame = parseInt(element.properties.frame);
@@ -419,7 +423,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
             this.currentSize *= this.growthFactor;
             
             this.createPlayer(player.x - (player.body.width * this.growthFactor / 2), 
-                player.y - 5*this.currentSize - (player.body.height * this.growthFactor / 2), this.currentSize);
+                player.y - 25 * this.currentSize, this.currentSize);
             player.kill();
             
         }
@@ -454,7 +458,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
         this.pauseText.fixedToCamera = true;
         this.game.paused = true;
         this.won = true;
-      
+        this.submitHighscore("anon", this.elapsedTime*100);
     },
 
 
@@ -490,8 +494,13 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
         if ('offsetY' in result[0].properties) {
             offsetY = parseInt(result[0].properties.offsetY);
         }
+        var scales = 0;
+        if ('scales' in result[0].properties) {
+            scales = parseInt(result[0].properties.scales);
+        }
 
-        this.exit = this.game.add.sprite(result[0].x, result[0].y + offsetY, 'tiles');
+
+        this.exit = this.game.add.sprite(result[0].x, result[0].y + offsetY - (64), 'tiles');
         this.exit.frame = 111;
         this.exit.anchor.setTo(0, 0);
 
@@ -540,7 +549,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
             text = this.game.add.text(4709, 416, '', this.fontStyle);
             text.text = "Below is your exit! But it will only open once you have found and eaten all the mushrooms!";
             this.textGroup.add(text);
-
+this.submitHighscore("start",this.elapsedTime);
         }
         else if (levelName == 'level2') {
             text = this.game.add.text(932, 416, '', this.fontStyle);
@@ -614,7 +623,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
         this.exitIsOpen = false;
         this.exitIsReady = false;
         this.mushroomsEaten = 0;
-
+        this.totalMushrooms = 0;
     },
 
     playerHitReset : function() {
@@ -622,6 +631,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
             this.playerDied();
         }
     },
+
     playerDied : function() {
 
         this.player.kill();
@@ -719,6 +729,41 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
     },
 
     createText : function() {
+    },
+
+    submitHighscore : function(name,score) {
+
+    var xmlhttp;
+
+    if (window.XMLHttpRequest) {
+        // code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest();
+    } else {
+        // code for IE6, IE5
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
     }
 
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+            if(xmlhttp.status == 200){
+            }
+            else if(xmlhttp.status == 400) {
+                console.log('There was an error 400')
+            }
+            else {
+                console.log('something else other than 200 was returned')
+            }
+        }
+    }
+
+<<<<<<< HEAD
+=======
+    var data = "name=" + name + "&score=" + score;
+    xmlhttp.open("POST", "http://myperfectgame.com/node/ld34/submitHighscore", true);
+    xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xmlhttp.send(data);
+},
+
+
+>>>>>>> db493a385c0e001689de2a2fc29c88e58bab933f
 };

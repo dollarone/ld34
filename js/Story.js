@@ -1,4 +1,4 @@
-var PlatfomerGame = PlatformerGame || {};
+var PlatformerGame = PlatformerGame || {};
 
 //title screen
 PlatformerGame.Story = function(){};
@@ -35,8 +35,8 @@ PlatformerGame.Story.prototype = {
   update: function() {
     this.animationTimer++;
 
-    if (this.animationTimer == 1500) {
-        
+    if (this.animationTimer == 1500 && !this.pressed) {
+        this.pressed = true;   
         this.state.start('Game');
     }
     else if (this.animationTimer >= 1200) {
