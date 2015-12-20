@@ -1,4 +1,4 @@
-var PlatfomerGame = PlatformerGame || {};
+var PlatformerGame = PlatformerGame || {};
 
 //title screen
 PlatformerGame.Game = function(){};
@@ -63,12 +63,16 @@ PlatformerGame.Game.prototype = {
         this.pauseText = PlatformerGame.game.add.text(380, 300, 'Paused', this.fontStyleSmall);
         this.pauseText.fixedToCamera = true;
         this.pauseText.visible = false;      
-        
+ 
         this.loadLevel(this.levelNames[this.thisLevel]);
         this.resetVars();
+
+        this.resetItemsGroup();
+        this.createItems();
+
         this.goToNextLevel = false;
 
-        this.game.sound.volume = 0.6;
+        this.game.sound.volume = 0.7;
 
 
         this.sound_injured1 = this.game.add.audio('injured1');
@@ -90,7 +94,7 @@ PlatformerGame.Game.prototype = {
         this.sound_random2.volume = 0.25;
 
         this.music = this.game.add.audio('theme');
-        this.music.volume = 0.4;
+        this.music.volume = 1;
         this.music.loop = true;
         this.music.play();
 
@@ -148,6 +152,8 @@ PlatformerGame.Game.prototype = {
             else {
                 this.loadLevel(this.levelNames[this.thisLevel]);
                 this.resetVars();
+        	this.resetItemsGroup();
+        	this.createItems();
             }
 
         }
@@ -272,7 +278,7 @@ PlatformerGame.Game.prototype = {
     },
 
     createPlayer : function(x, y, size) {
-        this.player = this.game.add.sprite(x, y, 'john');
+        this.player = this.game.add.sprite(x, y - 64, 'john');
         this.player.scale.setTo(size);
 
         //  We need to enable physics on the player
@@ -324,8 +330,6 @@ PlatformerGame.Game.prototype = {
         var result = new Array();
         map.objects[layer].forEach(function(element) {
             if (element.properties.type === type) {
-                // phaser uses top left - tiled bottom left so need to adjust:
-                element.y -= map.tileHeight;
                 result.push(element);
             }
         });
@@ -340,14 +344,14 @@ PlatformerGame.Game.prototype = {
         }
 
         if ('special' in element.properties && (element.properties.special == "mushroom" || element.properties.special == "shroom")) {
-            sprite = group.create(element.x, element.y + 32 + offsetY, 'mushrooms');
+            sprite = group.create(element.x, element.y + 32 + offsetY - 64, 'mushrooms');
             this.totalMushrooms++;
         }
         else if ('special' in element.properties && element.properties.special == "spikes") {
-            sprite = group.create(element.x, element.y + 32 + offsetY, 'spikes');
+            sprite = group.create(element.x, element.y + 32 + offsetY - 64, 'spikes');
         }
         else {
-            sprite = group.create(element.x, element.y + 32 + offsetY, 'tiles');
+            sprite = group.create(element.x, element.y + 32 + offsetY - 64, 'tiles');
         }
 
         sprite.frame = parseInt(element.properties.frame);
@@ -390,7 +394,7 @@ PlatformerGame.Game.prototype = {
             this.currentSize *= this.growthFactor;
             
             this.createPlayer(player.x - (player.body.width * this.growthFactor / 2), 
-                player.y - 5*this.currentSize - (player.body.height * this.growthFactor / 2), this.currentSize);
+                player.y - 25 * this.currentSize, this.currentSize);
             player.kill();
             
         }
@@ -425,7 +429,7 @@ PlatformerGame.Game.prototype = {
         this.pauseText.fixedToCamera = true;
         this.game.paused = true;
         this.won = true;
-      
+        this.submitHighscore("anon", this.elapsedTime*100);
     },
 
 
@@ -459,8 +463,13 @@ PlatformerGame.Game.prototype = {
         if ('offsetY' in result[0].properties) {
             offsetY = parseInt(result[0].properties.offsetY);
         }
+        var scales = 0;
+        if ('scales' in result[0].properties) {
+            scales = parseInt(result[0].properties.scales);
+        }
 
-        this.exit = this.game.add.sprite(result[0].x, result[0].y + offsetY, 'tiles');
+
+        this.exit = this.game.add.sprite(result[0].x, result[0].y + offsetY - (64), 'tiles');
         this.exit.frame = 111;
         this.exit.anchor.setTo(0, 0);
 
@@ -506,7 +515,7 @@ PlatformerGame.Game.prototype = {
             text = this.game.add.text(4709, 416, '', this.fontStyle);
             text.text = "Below is your exit! But it will only open once you have found and eaten all the mushrooms!";
             this.textGroup.add(text);
-
+this.submitHighscore("start",this.elapsedTime);
         }
         else if (levelName == 'level2') {
             text = this.game.add.text(932, 416, '', this.fontStyle);
@@ -580,7 +589,7 @@ PlatformerGame.Game.prototype = {
         this.exitIsOpen = false;
         this.exitIsReady = false;
         this.mushroomsEaten = 0;
-
+        this.totalMushrooms = 0;
     },
 
     playerHitReset : function() {
@@ -588,6 +597,7 @@ PlatformerGame.Game.prototype = {
             this.playerDied();
         }
     },
+
     playerDied : function() {
 
         this.player.kill();
@@ -685,6 +695,38 @@ PlatformerGame.Game.prototype = {
     },
 
     createText : function() {
+    },
+
+    submitHighscore : function(name,score) {
+
+    var xmlhttp;
+
+    if (window.XMLHttpRequest) {
+        // code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest();
+    } else {
+        // code for IE6, IE5
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
     }
+
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+            if(xmlhttp.status == 200){
+            }
+            else if(xmlhttp.status == 400) {
+                console.log('There was an error 400')
+            }
+            else {
+                console.log('something else other than 200 was returned')
+            }
+        }
+    }
+
+    var data = "name=" + name + "&score=" + score;
+    xmlhttp.open("POST", "http://myperfectgame.com/node/ld34/submitHighscore", true);
+    xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xmlhttp.send(data);
+},
+
 
 };
