@@ -43,15 +43,15 @@
                  "name":"",
                  "properties":
                     {
-                     "frame":"2",
-                     "special":"mushroom",
+                     "frame":"0",
+                     "special":"shroom",
                      "type":"item"
                     },
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":5760,
-                 "y":640
+                 "x":5440,
+                 "y":768
                 }, 
                 {
                  "gid":103,
@@ -75,7 +75,7 @@
                     {
                      "frame":"111",
                      "offsetY":"32",
-                     "scales":"1",
+                     "scales":"2",
                      "special":"exit",
                      "type":"exit"
                     },
@@ -83,7 +83,7 @@
                  "visible":true,
                  "width":0,
                  "x":4736,
-                 "y":640
+                 "y":576
                 }, 
                 {
                  "gid":111,

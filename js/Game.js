@@ -99,6 +99,7 @@ PlatformerGame.Game.prototype = {
 
         this.music = this.game.add.audio('theme');
         this.music.loop = true;
+        this.music.volume = 1.2;
         this.music.play();
 
         this.elapsedTime = 0;
@@ -149,7 +150,7 @@ PlatformerGame.Game.prototype = {
             }, this);
         }
 
-        if(this.distanceToExit() < 70 && this.exitIsReady) {
+        if(this.distanceToExit() < 70 && this.exitIsReady && this.exitIsOpen) {
             this.goToNextLevel = true;;
         }
 
@@ -583,6 +584,12 @@ this.submitHighscore("start",this.elapsedTime);
 
     resetVars : function() {
 
+        this.exit.animations.stop();
+        this.exit.frame = 111;
+        this.exitIsOpening = false;
+        this.exitIsOpen = false;
+        this.goToNextLevel = false;
+
         this.playerCanJump = false;
         this.playerJumpTimer = 0;
         this.timer = 0;
@@ -638,6 +645,7 @@ this.submitHighscore("start",this.elapsedTime);
 
         this.player.kill();
         this.resetVars();
+
         var result = this.findObjectsByType('playerStart', this.map, 'ObjectLayer');
         this.createPlayer(result[0].x, result[0].y - 65, 1);
 
