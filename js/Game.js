@@ -41,11 +41,12 @@ PlatformerGame.Game.prototype = {
         '177':31,'178':33,'179': 1,'180': 1,'181': 1,'182': 1,'183': 1,'184': 1
     }; 
 
-        this.game.physics.ninja.gravity = 0.4;
+        this.game.physics.ninja.gravity = 0.6;
+
         this.showDebug = false;
 
         this.thisLevel = 1;
-        this.levelNames = ['level_0_is_secret', 'level4', 'level2', 'level3'];
+        this.levelNames = ['level_0_is_secret',  'level1', 'level2', 'level3'];
         this.won = false;
         //  The score
         this.fontStyle = { font: "23px Oswald", fill: "#000", align: "center" };
@@ -59,6 +60,9 @@ PlatformerGame.Game.prototype = {
 
         this.pkey = this.game.input.keyboard.addKey(Phaser.Keyboard.P);
         this.pkey.onDown.add(this.pause, this);
+
+        this.zkey = this.game.input.keyboard.addKey(Phaser.Keyboard.Z);
+        this.xkey = this.game.input.keyboard.addKey(Phaser.Keyboard.X);
 
         this.pauseText = PlatformerGame.game.add.text(380, 300, 'Paused', this.fontStyleSmall);
         this.pauseText.fixedToCamera = true;
@@ -94,7 +98,6 @@ PlatformerGame.Game.prototype = {
         this.sound_random2.volume = 0.25;
 
         this.music = this.game.add.audio('theme');
-        this.music.volume = 1;
         this.music.loop = true;
         this.music.play();
 
@@ -110,13 +113,18 @@ PlatformerGame.Game.prototype = {
     
     },
 
+    introMusicStopped: function(event) {
+        this.music.play();
+    },
+
     update: function() {
         this.timer++;
         this.elapsedTime = this.game.time.totalElapsedSeconds();
         this.scoreText.text = "Mushrooms eaten:  " + this.mushroomsEaten;
         this.scoreText2.text = "Total mushrooms in this level:  " + this.totalMushrooms;
         this.timeText.text = "Total game time:  " + (this.elapsedTime).toFixed(1);
-
+       // this.scoreText2.text = "JumpSpeed : " + this.jumpUpSpeed + " Speed : " + this.speed;
+      //  this.timeText.text = Math.min(this.player.body.maxSpeed, Math.max(-this.player.body.maxSpeed, this.player.body.shape.pos.x - this.player.body.shape.oldpos.x + (-this.speed * this.game.time.physicsElapsed)));
         if (this.playerIsDead) {
             this.playerDied();
         }
@@ -172,17 +180,15 @@ PlatformerGame.Game.prototype = {
             this.playerDied();
         }
 
-console.log(this.timer);
         if (this.timer % 100 == 0) {
             this.avalancheLaunchers.forEach(function(avalancheLauncher) {
-                sprite = this.items.create(avalancheLauncher.x - 64, avalancheLauncher.y - 32, 'rock');
+                sprite = this.items.create(avalancheLauncher.x, avalancheLauncher.y, 'rock');
                 this.game.physics.ninja.enable(sprite);
                 sprite.special = 'rock';
-                sprite.body.moveLeft(30);
+                sprite.body.moveLeft(65);
                 sprite.body.collideWorldBounds = false;
 
-                sprite.body.friction = 0.1;
-console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
+                sprite.body.friction = 0.02;
                 }, this);
         }
 
@@ -203,95 +209,88 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
             this.items.forEach(function(item) {
                 item.body.aabb.collideAABBVsTile(this.tiles[i].tile);
                 if (item.special == 'rock') {
-                        item.body.moveLeft(30);
+                        //item.body.moveLeft(30);
                 }
             }, this);
        
         }
 
-        if (this.cursors.down.isDown) {
-            if (!this.shifted) {
-                this.shifted = true;
+        this.keyControls();
+    },
+
+
+    keyControls: function() {
+
+        if (this.cursors.left.isDown) {
+
+            if (this.direction != 0) {
                 this.direction = (this.direction + 1) % 2;
                 this.resetSpeed();
+                this.player.scale.setTo(-this.currentSize, this.currentSize);
+            }
+
+            if (this.playerCanJump) {
+                this.player.body.moveLeft(this.speed);
+                this.player.scale.setTo(-this.currentSize, this.currentSize);
+                this.player.animations.play('right');
+            }
+            else {
+                this.player.body.moveLeft(this.jumpSpeed);
+                this.player.animations.stop(); 
+                this.player.frame = 96;  
+            }
+        }
+        else if (this.cursors.right.isDown) {
+
+            if (this.direction != 1) {
+                this.direction = (this.direction + 1) % 2;
+                this.resetSpeed();
+                this.player.scale.setTo(this.currentSize, this.currentSize);
+            }
+
+            if (this.playerCanJump) {
+                this.player.body.moveRight(this.speed);
+                this.player.animations.play('right');
+            }
+            else {
+                this.player.body.moveRight(this.jumpSpeed);
                 this.player.animations.stop();
-                this.player.frame = 96;
+                this.player.frame = 96;  
             }
         }
         else {
-            if (this.shifted) {
-                if (this.direction == 0) {
-                    this.player.scale.setTo(-this.currentSize, this.currentSize);
-                    this.player.animations.play('right');
-                }
-                else {
-                    this.player.scale.setTo(this.currentSize, this.currentSize);
-                    this.player.animations.play('right');
-                }
-                this.shifted = false;
-            }
-
-            if (this.direction == 0) {
-                
-                if (this.playerCanJump) {
-                    this.player.body.moveLeft(this.speed);
-                }
-                else {
-                    this.player.body.moveLeft(this.jumpSpeed);
-                }
-            }
-            else if (this.direction == 1) {
-                //this.player.animations.play('right');
-                if (this.playerCanJump) {
-                    this.player.body.moveRight(this.speed);
-                }
-                else {
-                    this.player.body.moveRight(this.jumpSpeed);
-                }
-            }
+                this.player.animations.stop();
+                this.player.frame = 96;            
         }
 
-        if (this.cursors.up.isDown) {
-            this.hasPressedJump = true;
-            this.run = true;
-        }
+        if (this.zkey.isDown) {
 
-        
-        if (this.playerJumpTimer == 1) {
+            if (!this.run) {
+                this.run = true;
+            }
+
+            if (this.playerCanJump) {
+                this.speed += this.speedIncrement;
+                this.speed = Math.min(this.speed, this.runMaxSpeed);
+                this.jumpSpeed += this.speedIncrement;
+                this.jumpSpeed = Math.min(this.jumpSpeed, this.jumpMaxSpeed);
+            }
+        }
+        else if (this.run) {
+            this.run = false;
             this.resetSpeed();
-            this.player.body.moveUp(this.jumpUpBaseSpeed + this.jumpSpeed*7);
-            this.playerJumpTimer--;
         }
-        else if (this.playerJumpTimer > 1) {
-            this.player.body.moveUp(this.jumpUpBaseSpeed + this.jumpSpeed*7);
-            this.playerJumpTimer--;
 
-        }
-        else if (!this.cursors.up.isDown && this.hasPressedJump) {
+        if (this.xkey.isDown) {
 
             if (this.playerCanJump && this.player.body.touching.down) {
-                this.player.body.moveUp(this.jumpUpBaseSpeed + this.jumpSpeed*7);
+                this.player.body.moveUp(390 + (this.jumpUpSpeed + this.speed)*this.playerSize);
                 this.playerCanJump = false;
-                this.playerJumpTimer = this.jumpTime;
-                
-                if (this.jumpMaxSpeed == this.jumpSpeed) {
-                    this.playerJumpTimer++;
-                }
+//                this.scoreText.text = Math.min(this.player.body.maxSpeed, Math.max(-this.player.body.maxSpeed, this.player.body.shape.pos.y - this.player.body.shape.oldpos.y + (-this.speed * this.game.time.physicsElapsed)));
+
             }
-            this.speed = this.walkSpeed;
-            this.run = false;
-            this.hasPressedJump = false;
-        }
-
-        if (this.run) {
-            this.speed += this.speedIncrement;
-            this.speed = Math.min(this.speed, this.runMaxSpeed);
-            this.jumpSpeed += this.speedIncrement;
-            this.jumpSpeed = Math.min(this.jumpSpeed, this.jumpMaxSpeed);
-        }
-        
+        }        
     },
-
     resetSpeed: function() {
         this.run = false;
         this.speed = this.walkSpeed;
@@ -299,24 +298,26 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
     },
 
     createPlayer : function(x, y, size) {
-        this.player = this.game.add.sprite(x, y - 64, 'john');
+        this.player = this.game.add.sprite(x, y, 'john');
         this.player.scale.setTo(size);
+        this.playerSize = size;
 
         //  We need to enable physics on the player
         this.game.physics.ninja.enable(this.player);
         //this.game.physics.ninja.enableCircle(this.player, this.player.width / 2);
         this.game.camera.follow(this.player);
 
-        this.player.body.bounce.y = 0.2;
+        this.player.body.bounce.y = 0.0001; //0.2;
         this.player.body.friction = 0.1;
-        this.player.body.drag = 0.9;
+        this.player.body.drag = 0.99;
         this.player.body.collideWorldBounds = false;
         this.player.anchor.setTo(0.5, 0.5);
 
+
         this.player.animations.add('right', [0,1,2,3,4,4,5, 0,1,2,3,4,4,5, 6,7,8,9,10,10,11], 10, true);
 
-        this.jumpTime += 4;
-        this.jumpUpBaseSpeed += 150;
+
+       // this.jumpUpSpeed += this.jumpUpSpeedLevelIncrement;
 
         if (this.direction == 0) {
             this.player.scale.setTo(-size, size);
@@ -366,21 +367,26 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
 
         if ('special' in element.properties) {
             if (element.properties.special == "mushroom" || element.properties.special == "shroom") {
-                sprite = group.create(element.x, element.y + 32 + offsetY, 'mushrooms');
+                sprite = group.create(element.x, element.y - 33 + offsetY, 'mushrooms');
                 this.totalMushrooms++;
+                this.game.physics.ninja.enable(sprite);
+
             }
             else if (element.properties.special == "spikes") {
-                sprite = group.create(element.x, element.y + 32 + offsetY, 'spikes');
-                //sprite.body.gravity = 0;
+                sprite = group.create(element.x, element.y - 18 + offsetY, 'spikes'); // 20?? why?
+                this.game.physics.ninja.enable(sprite);
+                sprite.body.gravityScale = 0;
             }
             else if (element.properties.special == "avalanche") {
-                sprite = group.create(element.x, element.y, 'spikes');
-                sprite.frame = 0;
+                sprite = group.create(element.x, element.y - 64 + offsetY, 'tiles');
                 this.avalancheLaunchers.add(sprite);
+                this.game.physics.ninja.enable(sprite);
+                sprite.body.gravityScale = 0;  
             }
         }
-        else {
-            sprite = group.create(element.x, element.y + 32 + offsetY - 64, 'tiles');
+        else { /// what are these?
+            sprite = group.create(element.x, element.y - 64 + offsetY, 'tiles'); // - 64 y??
+                 
         }
 
         sprite.frame = parseInt(element.properties.frame);
@@ -388,10 +394,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
 
         if ('scales' in element.properties) {
             sprite.scale.setTo(parseInt(element.properties.scales), parseInt(element.properties.scales));
-        }
-
-        this.game.physics.ninja.enable(sprite);
-        
+        }        
         // copy all of the sprite's properties
         Object.keys(element.properties).forEach(function(key) {
             sprite[key] = element.properties[key];
@@ -407,23 +410,24 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
             if (this.playerHurtCooldown == 0) {
                 this.playerHurt(player);
             }
+            else {
+                this.playerCanJump = true;
+            }
         }
         else if (item.special == "mushroom") { 
-            // Removes the star from the screen
             item.kill();
             this.playRandomEatSound();
             this.mushroomsEaten++;
         }
         else if (item.special == "shroom") { 
-            // Removes the star from the screen
             item.kill();
             this.playRandomShroomSound();
-            this.mushroomsEaten++;            
-
+            this.mushroomsEaten++; 
             this.currentSize *= this.growthFactor;
-            
+
             this.createPlayer(player.x - (player.body.width * this.growthFactor / 2), 
-                player.y - 25 * this.currentSize, this.currentSize);
+                player.y - player.body.height, 
+                this.currentSize);
             player.kill();
             
         }
@@ -444,8 +448,8 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
             this.createPlayer(player.x - (this.originalWidth * this.growthFactor / 2), 
                 player.y - 5*this.currentSize - (this.originalHeight * this.growthFactor / 2), this.currentSize);
             player.kill();
-            this.jumpUpBaseSpeed = this.jumpUpBaseSpeedInitial;
-            this.jumpTime = this.jumpTimeInitial;
+            this.jumpUpSpeed = this.jumpUpBaseSpeed;
+
             var tween = this.game.add.tween(this.player).to( { alpha: 0.5 }, 50, "Linear", true, 0, 4);
             tween.yoyo(true, 150);
         }
@@ -472,9 +476,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
             this.textGroup.destroy();
             this.foregroundLayer.destroy();
             this.exit.destroy();
-            this.avalancheLaunchers.destroy();
-
-            
+            this.avalancheLaunchers.destroy();            
         }
         this.map = this.game.add.tilemap(levelName);
         
@@ -500,7 +502,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
         }
 
 
-        this.exit = this.game.add.sprite(result[0].x, result[0].y + offsetY - (64), 'tiles');
+        this.exit = this.game.add.sprite(result[0].x, result[0].y + offsetY - 64, 'tiles');
         this.exit.frame = 111;
         this.exit.anchor.setTo(0, 0);
 
@@ -522,7 +524,7 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
         this.createItems();
 
         var result = this.findObjectsByType('playerStart', this.map, 'ObjectLayer');
-        this.createPlayer(result[0].x, result[0].y, 1);
+        this.createPlayer(result[0].x, result[0].y - 65, 1);
         
         this.textGroup = this.game.add.group();
 
@@ -531,23 +533,23 @@ console.log("spanwing rock at "  + sprite.x + " / " + sprite.y);
         if (levelName == 'level1') {
             text = this.game.add.text(32, 416, '', this.fontStyle);
             //text.text = "Grumpy wizards make toxic brew for the evil Queen and Jack." //Press up to jump!"
-            text.text = "Ah, perhaps you will want to get up up and away? Press up to jump!";
+            text.text = "Ah, perhaps you will want to get up up and away? Press X to jump!";
             this.textGroup.add(text);
 
             text = this.game.add.text(1509, 416, '', this.fontStyle);
-            text.text = "Sometimes you need a bit more speed. Hold up to run!";
+            text.text = "Sometimes you need a bit more speed. Hold Z to run!";
             this.textGroup.add(text);
 
             text = this.game.add.text(3009, 416, '', this.fontStyle);
-            text.text = "Not sure which way you want to go? Press down to change direction!";
+            text.text = "Find and eat all the mushrooms in each level!";
             this.textGroup.add(text);
 
             text = this.game.add.text(4009, 416, '', this.fontStyle);
-            text.text = "You can also hold down to stay still.";
+            text.text = "The exit gate will only open once all mushrooms have been eaten!";
             this.textGroup.add(text);
 
             text = this.game.add.text(4709, 416, '', this.fontStyle);
-            text.text = "Below is your exit! But it will only open once you have found and eaten all the mushrooms!";
+            text.text = "Below is your exit!";
             this.textGroup.add(text);
 this.submitHighscore("start",this.elapsedTime);
         }
@@ -587,10 +589,10 @@ this.submitHighscore("start",this.elapsedTime);
 
         this.currentSize = 1;
 
-        this.jumpUpBaseSpeedInitial = 80;
-        this.jumpUpBaseSpeed = this.jumpUpBaseSpeedInitial;
-        this.jumpTimeInitial = 7;
-        this.jumpTime = this.jumpTimeInitial;
+        this.jumpUpBaseSpeed = 160;
+        this.jumpUpSpeed = this.jumpUpBaseSpeed;
+        this.jumpUpSpeedLevelIncrement = 100;
+
         this.growthFactor = 1.5;
         this.tileOffsetY = this.player.width / 3;
 
@@ -603,11 +605,11 @@ this.submitHighscore("start",this.elapsedTime);
         this.run = false;
         this.shifted = false;
 
-        this.runMaxSpeed = 100;
-        this.walkSpeed = 30;
-        this.jumpBaseSpeed = 10;
-        this.jumpMaxSpeed = 40;
-        this.speedIncrement = 1;
+        this.runMaxSpeed = 90;
+        this.walkSpeed = 20;
+        this.jumpBaseSpeed = 3;
+        this.jumpMaxSpeed = 3;
+        this.speedIncrement = 3;
         this.speed = this.walkSpeed;
         this.jumpSpeed = this.jumpBaseSpeed;
 
@@ -637,7 +639,7 @@ this.submitHighscore("start",this.elapsedTime);
         this.player.kill();
         this.resetVars();
         var result = this.findObjectsByType('playerStart', this.map, 'ObjectLayer');
-        this.createPlayer(result[0].x, result[0].y, 1);
+        this.createPlayer(result[0].x, result[0].y - 65, 1);
 
         this.resetItemsGroup();
         this.createItems();
@@ -733,37 +735,32 @@ this.submitHighscore("start",this.elapsedTime);
 
     submitHighscore : function(name,score) {
 
-    var xmlhttp;
+        var xmlhttp;
 
-    if (window.XMLHttpRequest) {
-        // code for IE7+, Firefox, Chrome, Opera, Safari
-        xmlhttp = new XMLHttpRequest();
-    } else {
-        // code for IE6, IE5
-        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-    }
+        if (window.XMLHttpRequest) {
+            // code for IE7+, Firefox, Chrome, Opera, Safari
+            xmlhttp = new XMLHttpRequest();
+        } else {
+            // code for IE6, IE5
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
 
-    xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
-            if(xmlhttp.status == 200){
-            }
-            else if(xmlhttp.status == 400) {
-                console.log('There was an error 400')
-            }
-            else {
-                console.log('something else other than 200 was returned')
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+                if(xmlhttp.status == 200){
+                }
+                else if(xmlhttp.status == 400) {
+                    console.log('There was an error 400')
+                }
+                else {
+                    console.log('something else other than 200 was returned')
+                }
             }
         }
-    }
 
-<<<<<<< HEAD
-=======
-    var data = "name=" + name + "&score=" + score;
-    xmlhttp.open("POST", "http://myperfectgame.com/node/ld34/submitHighscore", true);
-    xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xmlhttp.send(data);
-},
-
-
->>>>>>> db493a385c0e001689de2a2fc29c88e58bab933f
+        var data = "name=" + name + "&score=" + score;
+        xmlhttp.open("POST", "http://myperfectgame.com/node/ld34/submitHighscore", true);
+        xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xmlhttp.send(data);
+    },
 };

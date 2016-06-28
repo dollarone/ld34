@@ -70586,7 +70586,8 @@ Phaser.Physics.Ninja.Body = function (system, sprite, type, id, radius, x, y, wi
     * @property {number} maxSpeed - The maximum speed this body can travel at (taking drag and friction into account)
     * @default
     */
-    this.maxSpeed = 8;
+    this.maxSpeed = 35;
+    this.maxXSpeed = 8;
 
     if (sprite)
     {
@@ -70758,7 +70759,7 @@ Phaser.Physics.Ninja.Body.prototype = {
 
         var fx = -speed * this.game.time.physicsElapsed;
 
-        this.shape.pos.x = this.shape.oldpos.x + Math.min(this.maxSpeed, Math.max(-this.maxSpeed, this.shape.pos.x - this.shape.oldpos.x + fx));
+        this.shape.pos.x = this.shape.oldpos.x + Math.min(this.maxXSpeed, Math.max(-this.maxXSpeed, this.shape.pos.x - this.shape.oldpos.x + fx));
 
     },
 
@@ -70773,7 +70774,7 @@ Phaser.Physics.Ninja.Body.prototype = {
 
         var fx = speed * this.game.time.physicsElapsed;
 
-        this.shape.pos.x = this.shape.oldpos.x + Math.min(this.maxSpeed, Math.max(-this.maxSpeed, this.shape.pos.x - this.shape.oldpos.x + fx));
+        this.shape.pos.x = this.shape.oldpos.x + Math.min(this.maxXSpeed, Math.max(-this.maxXSpeed, this.shape.pos.x - this.shape.oldpos.x + fx));
 
     },
 
